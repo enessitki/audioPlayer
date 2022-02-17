@@ -33,9 +33,11 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.Console;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -43,25 +45,22 @@ import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
-    Button up,down,start;
-    float speed = 1f;
-
     // User input mp3 file url in this text box. Or display user selected mp3 file name.
-    private TextView audioFilePathEditor,duration,title,haay_text;
+    private TextView audioFilePathEditor,duration,title,haay_text,duration_count;
     // Click this button to let user select mp3 file.
     private ImageButton browseAudioFileButton;
     // Start play audio button.
-    private ImageButton startButton;
+    private ImageButton startButton,backward,forward;
     private ImageView girl;
     private Button one_x_button,two_x_button,zero_five_x_button,zero_seven_x_button,one_five_x_button;
 
+    short start = 0;
+
     int currPlayPosition;
-    // Pause playing audio button.
-    private ImageButton pauseButton;
-    // Stop playing audio button.
-    private ImageButton stopButton;
+
+    int currProgress;
     // Show played audio progress.
-    private ProgressBar playAudioProgress;
+    private SeekBar playAudioProgress;
     // Used when user select audio file.
     private static final int REQUEST_CODE_SELECT_AUDIO_FILE = 1;
     // Used when user require android READ_EXTERNAL_PERMISSION.
@@ -109,11 +108,12 @@ public class MainActivity extends AppCompatActivity {
         girl = findViewById(R.id.girl);
 
         startButton = findViewById(R.id.play_audio_start_button);
-        pauseButton = findViewById(R.id.play_audio_pause_button);
-        stopButton = findViewById(R.id.play_audio_stop_button);
+        backward = findViewById(R.id.backward);
+        forward = findViewById(R.id.forward);
         playAudioProgress = findViewById(R.id.play_audio_progressbar);
 
         duration = findViewById(R.id.duration);
+        duration_count = findViewById(R.id.duration_count);
         title = findViewById(R.id.title);
         haay_text = findViewById(R.id.haay_text);
 
@@ -124,7 +124,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 view.startAnimation(zeroFiveXAnimation);
-
+                zero_five_x_button.setAlpha(1f);
+                zero_seven_x_button.setAlpha(0.4f);
+                one_x_button.setAlpha(0.4f);
+                one_five_x_button.setAlpha(0.4f);
+                two_x_button.setAlpha(0.4f);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     PlaybackParams params = audioPlayer.getPlaybackParams();
                     params.setSpeed(1f);
@@ -138,7 +142,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 view.startAnimation(zeroSevenXAnimation);
-
+                zero_five_x_button.setAlpha(0.4f);
+                zero_seven_x_button.setAlpha(1f);
+                one_x_button.setAlpha(0.4f);
+                one_five_x_button.setAlpha(0.4f);
+                two_x_button.setAlpha(0.4f);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     PlaybackParams params = audioPlayer.getPlaybackParams();
                     params.setSpeed(1.25f);
@@ -151,7 +159,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 view.startAnimation(oneXAnimation);
-
+                zero_five_x_button.setAlpha(0.4f);
+                zero_seven_x_button.setAlpha(0.4f);
+                one_x_button.setAlpha(1f);
+                one_five_x_button.setAlpha(0.4f);
+                two_x_button.setAlpha(0.4f);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     PlaybackParams params = audioPlayer.getPlaybackParams();
                     params.setSpeed(1.5f);
@@ -165,7 +177,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 view.startAnimation(oneFiveXAnimation);
-
+                zero_five_x_button.setAlpha(0.4f);
+                zero_seven_x_button.setAlpha(0.4f);
+                one_x_button.setAlpha(0.4f);
+                one_five_x_button.setAlpha(1f);
+                two_x_button.setAlpha(0.4f);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     PlaybackParams params = audioPlayer.getPlaybackParams();
                     params.setSpeed(1.75f);
@@ -179,13 +195,46 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 view.startAnimation(twoXAnimation);
-
+                zero_five_x_button.setAlpha(0.4f);
+                zero_seven_x_button.setAlpha(0.4f);
+                one_x_button.setAlpha(0.4f);
+                one_five_x_button.setAlpha(0.4f);
+                two_x_button.setAlpha(1f);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     PlaybackParams params = audioPlayer.getPlaybackParams();
                     params.setSpeed(2f);
                     audioPlayer.setPlaybackParams(params);
 
                 }
+            }
+        });
+        backward.setOnClickListener(view -> {
+            view.startAnimation(stopButtonAnimation);
+            int currentPosition = audioPlayer.getCurrentPosition();
+            audioPlayer.seekTo((currentPosition - 3000));
+        });
+        forward.setOnClickListener(view -> {
+            view.startAnimation(pauseButtonAnimation);
+            int currentPosition = audioPlayer.getCurrentPosition();
+
+            audioPlayer.seekTo((currentPosition + 3000));
+        });
+        playAudioProgress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean b) {
+                if(audioPlayer != null && b){
+                    audioPlayer.seekTo(progress * 1000);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
             }
         });
         /* Initialize audio progress handler. */
@@ -206,16 +255,13 @@ public class MainActivity extends AppCompatActivity {
 
                             long seconds = TimeUnit.MILLISECONDS.toSeconds(totalTime);
 
-                            playAudioProgress.setMax((int)seconds);
-
-
 
 
 //                            Log.i("sec", String.valueOf(DocumentFile.fromSingleUri(getApplicationContext(), audioFileUri).getName()));
 //                            int seconds=totalTime/1000;
 
                             // Calculate the percentage.
-                            int currProgress = (currPlayPosition * 1000) / totalTime;
+                             currProgress = (currPlayPosition * 1000) / totalTime;
 
                             int second = (int) (seconds % 60);
                             int minute = (int) seconds / 60;
@@ -227,8 +273,20 @@ public class MainActivity extends AppCompatActivity {
                             duration.setText(minute + ":" + (second < 10 ? "0" + second : second));
                             if(currProgress % 2 == 1) haay_text.startAnimation(haayAnimation);
 
+                            int second_c = (currProgress % 60);
+                            int minute_c = currProgress / 60;
+                            if (minute_c >= 60) {
+                                int hour_c = minute_c / 60;
+                                minute_c %= 60;
+                                duration_count.setText( hour_c + ":" + (minute_c < 10 ? "0" + minute_c : minute_c) + ":" + (second_c < 10 ? "0" + second_c : second_c));;
+                            }
+                            duration_count.setText(minute_c + ":" + (second_c < 10 ? "0" + second_c : second_c));
                             // Update progressbar.
-                            playAudioProgress.setProgress(currProgress);
+//                            playAudioProgress.setProgress(currProgress / 1000);
+
+                            playAudioProgress.setProgress(currPlayPosition/1000);
+                            Log.i("", String.valueOf(currPlayPosition/ 1000));
+
                         }
                     }
                 }
@@ -246,19 +304,23 @@ public class MainActivity extends AppCompatActivity {
                     String text = audioFilePathEditor.getText().toString();
                     if (text.length() > 0) {
                         startButton.setEnabled(true);
-                        pauseButton.setEnabled(false);
-                        stopButton.setEnabled(false);
+                        backward.setEnabled(true);
+                        forward.setEnabled(true);
+
+                        backward.setAlpha(1f);
+                        forward.setAlpha(1f);
                         startButton.setAlpha(1f);
-                        pauseButton.setAlpha(0.4f);
-                        stopButton.setAlpha(0.4f);
+
                     } else {
                         startButton.setEnabled(false);
-                        pauseButton.setEnabled(false);
-                        stopButton.setEnabled(false);
+                        backward.setEnabled(false);
+                        forward.setEnabled(false);
+
+                        backward.setAlpha(0.4f);
+                        forward.setAlpha(0.4f);
 
                         startButton.setAlpha(0.4f);
-                        pauseButton.setAlpha(0.4f);
-                        stopButton.setAlpha(0.4f);
+
                     }
                 }
                 return false;
@@ -287,20 +349,25 @@ public class MainActivity extends AppCompatActivity {
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                    view.startAnimation(startButtonAnimation);
+                view.startAnimation(startButtonAnimation);
+
+                if(start == 0) {
+                    startButton.setBackgroundResource(R.drawable.pause_512);
+                    start = 1;
                     haay_text.setText("Aferin çalışıyon Şuleee");
-                    startButton.setEnabled(false);
-                    pauseButton.setEnabled(true);
-                    stopButton.setEnabled(true);
+                    startButton.setEnabled(true);
                     one_x_button.setEnabled(true);
                     two_x_button.setEnabled(true);
                     zero_five_x_button.setEnabled(true);
                     zero_seven_x_button.setEnabled(true);
                     one_five_x_button.setEnabled(true);
+                    backward.setEnabled(true);
+                    forward.setEnabled(true);
+
+                    backward.setAlpha(1f);
+                    forward.setAlpha(1f);
 
                     startButton.setAlpha(1f);
-                    pauseButton.setAlpha(1f);
-                    stopButton.setAlpha(1f);
                     one_x_button.setAlpha(1f);
                     two_x_button.setAlpha(1f);
                     zero_five_x_button.setAlpha(1f);
@@ -341,54 +408,27 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         Toast.makeText(getApplicationContext(), "Bu dosya oynatılamıyo ıggghhhh", Toast.LENGTH_LONG).show();
                     }
-            }
-        });
-
-        /* When pause button is clicked. */
-        pauseButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                view.startAnimation(pauseButtonAnimation);
-
-                if(audioIsPlaying)
-                {
+                }
+                else if (start == 1){
+                    start = 0;
+                    startButton.setBackgroundResource(R.drawable.play_512);
                     audioPlayer.pause();
                     startButton.setEnabled(true);
-                    pauseButton.setEnabled(false);
-                    stopButton.setEnabled(true);
-
                     startButton.setAlpha(1f);
-                    pauseButton.setAlpha(0.4f);
-                    stopButton.setAlpha(1f);
+
+                    backward.setEnabled(false);
+                    forward.setEnabled(false);
+
+                    backward.setAlpha(0.4f);
+                    forward.setAlpha(0.4f);
 
                     audioIsPlaying = false;
                     updateAudioPalyerProgressThread = null;
-                }
-            }
-        });
-        /* When stop button is clicked. */
-        stopButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                view.startAnimation(stopButtonAnimation);
-                if(audioIsPlaying)
-                {
-                    audioPlayer.stop();
-                    audioPlayer.release();
-                    audioPlayer = null;
-                    startButton.setEnabled(true);
-                    pauseButton.setEnabled(false);
-                    stopButton.setEnabled(false);
 
-                    startButton.setAlpha(1f);
-                    pauseButton.setAlpha(0.4f);
-                    stopButton.setAlpha(0.4f);
-                    updateAudioPalyerProgressThread = null;
-                    playAudioProgress.setProgress(0);
-                    audioIsPlaying = false;
                 }
             }
         });
+
 
         animations();
 
@@ -455,13 +495,21 @@ public class MainActivity extends AppCompatActivity {
                 audioFilePathEditor.setText("Seçilen Dosya: " + audioFileName);
                 title.setText(String.valueOf(DocumentFile.fromSingleUri(getApplicationContext(), audioFileUri).getName()));
                 initAudioPlayer();
-                startButton.setEnabled(true);
-                pauseButton.setEnabled(false);
-                stopButton.setEnabled(false);
 
+                int totalTime = audioPlayer.getDuration();
+
+                long seconds = TimeUnit.MILLISECONDS.toSeconds(totalTime);
+
+                playAudioProgress.setMax((int) seconds);
+
+                startButton.setEnabled(true);
                 startButton.setAlpha(1f);
-                pauseButton.setAlpha(0.4f);
-                stopButton.setAlpha(0.4f);
+
+                backward.setEnabled(true);
+                forward.setEnabled(true);
+
+                backward.setAlpha(1f);
+                forward.setAlpha(1f);
             }
         }
     }
@@ -514,8 +562,6 @@ public class MainActivity extends AppCompatActivity {
 
             girl.startAnimation(animateLogo);
             startButton.startAnimation(animateLogo);
-            stopButton.startAnimation(animateLogo);
-            pauseButton.startAnimation(animateLogo);
             one_five_x_button.startAnimation(animateLogo);
             one_x_button.startAnimation(animateLogo);
             zero_seven_x_button.startAnimation(animateLogo);
